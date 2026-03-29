@@ -100,5 +100,5 @@ Each run produces one enhanced recipe per original recipe that aggregates all su
 uv add <package_name>
 
 # Run tests
-cd src && uv run python test_pipeline.py single
+uv run python src/test_pipeline.py single
 ```
