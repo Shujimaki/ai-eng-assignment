@@ -39,20 +39,18 @@ uv run python src/scraper_v2.py
 ### 2. Run Recipe Enhancement Pipeline
 
 ```bash
-cd src
-
 # Test single recipe (chocolate chip cookies)
-uv run python test_pipeline.py single
+uv run python src/test_pipeline.py single
 
 # Process all recipes
-uv run python test_pipeline.py all
+uv run python src/test_pipeline.py all
 ```
 
 ## Output
 
 ### Enhanced Recipes
 
-Enhanced recipes are saved in `src/data/enhanced/`:
+Enhanced recipes are saved in `data/enhanced/`:
 
 - `enhanced_[recipe_id]_[recipe-name].json` - Individual enhanced recipes with modifications applied
 - `pipeline_summary_report.json` - Summary of all processing results
@@ -89,11 +87,11 @@ Original scraped recipes in the `data/` directory contain reviews with `has_modi
 
 The LLM Analysis Pipeline processes recipes in 3 steps:
 
-1. **Tweak Extraction**: Selects one random review with modifications and uses GPT-4o-mini to extract structured changes
-2. **Recipe Modification**: Applies changes to the original recipe using fuzzy string matching
-3. **Enhanced Recipe Generation**: Creates enhanced version with full citation tracking back to source review
+1. **Tweak Extraction**: Iterates through all available modification reviews and featured tweaks, using GPT-4o-mini to extract structured changes.
+2. **Recipe Modification**: Applies changes to the original recipe using exact-line fuzzy string matching.
+3. **Enhanced Recipe Generation**: Creates an enhanced version with full citation tracking back to the source reviews.
 
-Each run produces one enhanced recipe per original recipe, with complete attribution showing exactly what changed and why.
+Each run produces one enhanced recipe per original recipe that aggregates all successful modifications, with complete attribution showing exactly what changed and why.
 
 ## Development
 
