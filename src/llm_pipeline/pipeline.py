@@ -99,12 +99,17 @@ class LLMAnalysisPipeline:
             List of Review objects
         """
         reviews = []
-        raw_reviews = recipe_data.get("reviews", [])
+        seen_texts = set()
 
-        for review_data in raw_reviews:
-            if review_data.get("text"):
+        raw_reviews = recipe_data.get("reviews", [])
+        featured_tweaks = recipe_data.get("featured_tweaks", [])
+
+        for review_data in raw_reviews + featured_tweaks:
+            text = review_data.get("text")
+            if text and text not in seen_texts:
+                seen_texts.add(text)
                 review = Review(
-                    text=review_data["text"],
+                    text=text,
                     rating=review_data.get("rating"),
                     username=review_data.get("username"),
                     has_modification=review_data.get("has_modification", False),
@@ -143,35 +148,46 @@ class LLMAnalysisPipeline:
                 logger.warning("No reviews with modifications found")
                 return None
 
-            # Step 1: Extract modification from one random review
-            logger.info("Step 1: Extracting modification from a single review...")
-            modification, source_review = (
-                self.tweak_extractor.extract_single_modification(reviews, recipe)
-            )
+            # Step 1: Extract modifications from all reviews
+            logger.info("Step 1: Extracting modifications from all reviews...")
+            modifications_and_reviews = []
+            
+            modification_reviews = [r for r in reviews if r.has_modification]
+            for review in modification_reviews:
+                modification = self.tweak_extractor.extract_modification(review, recipe)
+                if modification:
+                    modifications_and_reviews.append((modification, review))
 
-            if not modification or not source_review:
-                logger.warning("No modification could be extracted")
+            if not modifications_and_reviews:
+                logger.warning("No modifications could be extracted")
                 return None
 
             logger.info(
-                f"Successfully extracted {modification.modification_type} modification"
+                f"Successfully extracted {len(modifications_and_reviews)} modifications"
             )
 
-            # Step 2: Apply modification to recipe
-            logger.info("Step 2: Applying modification to recipe...")
-            modified_recipe, change_records = self.recipe_modifier.apply_modification(
-                recipe, modification
+            # Step 2: Apply modifications to recipe
+            logger.info("Step 2: Applying modifications to recipe...")
+            modifications = [m[0] for m in modifications_and_reviews]
+            modified_recipe, batch_change_records = self.recipe_modifier.apply_modifications_batch(
+                recipe, modifications
             )
 
+            total_changes = sum(len(cr) for cr in batch_change_records)
             logger.info(
-                f"Applied modification: {len(change_records)} total changes made"
+                f"Applied modifications: {total_changes} total changes made"
             )
 
             # Step 3: Generate enhanced recipe with attribution
             logger.info("Step 3: Generating enhanced recipe with attribution...")
 
+            # Pack them together for the generator
+            mods_reviews_changes = []
+            for i, (mod, rev) in enumerate(modifications_and_reviews):
+                mods_reviews_changes.append((mod, rev, batch_change_records[i]))
+
             enhanced_recipe = self.enhanced_generator.generate_enhanced_recipe(
-                recipe, modified_recipe, modification, source_review, change_records
+                recipe, modified_recipe, mods_reviews_changes
             )
 
             logger.info(f"Generated enhanced recipe: {enhanced_recipe.title}")

@@ -72,6 +72,7 @@ class EnhancedRecipeGenerator:
             modification_type=modification.modification_type,
             reasoning=modification.reasoning,
             changes_made=change_records,
+            confidence_score=getattr(modification, "confidence_score", 0.85),
         )
 
     def calculate_enhancement_summary(
@@ -101,20 +102,22 @@ class EnhancedRecipeGenerator:
                 f" (and {len(impact_descriptions) - 3} more improvements)"
             )
 
+        scores = [m.confidence_score for m in modifications_applied if getattr(m, "confidence_score", None) is not None]
+        avg_score = sum(scores) / len(scores) if scores else None
+
         return EnhancementSummary(
             total_changes=total_changes,
             change_types=change_types,
             expected_impact=expected_impact
             or "Community-validated recipe improvements",
+            confidence_score=round(avg_score, 2) if avg_score else None,
         )
 
     def generate_enhanced_recipe(
         self,
         original_recipe: Recipe,
         modified_recipe: Recipe,
-        modification: ModificationObject,
-        source_review: Review,
-        change_records: List[ChangeRecord],
+        mods_reviews_changes: List[tuple],
     ) -> EnhancedRecipe:
         """
         Generate a complete enhanced recipe with attribution.
@@ -122,20 +125,17 @@ class EnhancedRecipeGenerator:
         Args:
             original_recipe: Original unmodified recipe
             modified_recipe: Recipe with modifications applied
-            modification: Single modification that was applied
-            source_review: Review that suggested the modification
-            change_records: Changes made for the modification
+            mods_reviews_changes: List of tuples of (modification, source_review, change_records)
 
         Returns:
             Complete EnhancedRecipe with attribution
         """
         logger.info(f"Generating enhanced recipe for: {original_recipe.title}")
 
-        # Create modification applied record
-        modification_applied = self.create_modification_applied(
-            modification, source_review, change_records
-        )
-        modifications_applied = [modification_applied]
+        modifications_applied = []
+        for mod, review, changes in mods_reviews_changes:
+            mod_applied = self.create_modification_applied(mod, review, changes)
+            modifications_applied.append(mod_applied)
 
         # Calculate enhancement summary
         enhancement_summary = self.calculate_enhancement_summary(modifications_applied)

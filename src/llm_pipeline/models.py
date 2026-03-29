@@ -44,6 +44,10 @@ class ModificationObject(BaseModel):
 
     edits: List[ModificationEdit] = Field(description="List of atomic edits to apply")
 
+    confidence_score: Optional[float] = Field(
+        default=0.85, description="Confidence score of the modification"
+    )
+
 
 class SourceReview(BaseModel):
     """Reference to the original review that suggested the modification."""
@@ -77,6 +81,9 @@ class ModificationApplied(BaseModel):
     changes_made: List[ChangeRecord] = Field(
         description="Detailed list of changes made"
     )
+    confidence_score: Optional[float] = Field(
+        default=None, description="Confidence score of the modification"
+    )
 
 
 class EnhancementSummary(BaseModel):
@@ -86,6 +93,9 @@ class EnhancementSummary(BaseModel):
     change_types: List[str] = Field(description="Types of modifications applied")
     expected_impact: str = Field(
         description="Expected improvement from these modifications"
+    )
+    confidence_score: Optional[float] = Field(
+        default=None, description="Overall confidence score"
     )
 
 
