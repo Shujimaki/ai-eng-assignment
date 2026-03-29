@@ -40,7 +40,8 @@ def test_single_recipe():
         return False
 
     # Test with chocolate chip cookie recipe
-    recipe_file = "../data/recipe_10813_best-chocolate-chip-cookies.json"
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    recipe_file = str(PROJECT_ROOT / "data" / "recipe_10813_best-chocolate-chip-cookies.json")
     if not Path(recipe_file).exists():
         logger.error(f"Recipe file not found: {recipe_file}")
         return False
@@ -91,8 +92,9 @@ def test_all_recipes():
 
     try:
         # Process all recipes
+        PROJECT_ROOT = Path(__file__).resolve().parent.parent
         enhanced_recipes = pipeline.process_recipe_directory(
-            data_dir="../data"
+            data_dir=str(PROJECT_ROOT / "data")
         )
 
         # Generate summary report

@@ -59,7 +59,7 @@ Enhanced recipes are saved in `src/data/enhanced/`:
 
 ### Data Structure
 
-Original scraped recipes in `data/` directory contain reviews with `has_modification: true` flags. Enhanced recipes include:
+Original scraped recipes in the `data/` directory contain reviews with `has_modification: true` flags. Note: there are 11 recipes in total, all of which can be processed by the pipeline. Enhanced recipes include:
 
 ```json
 {

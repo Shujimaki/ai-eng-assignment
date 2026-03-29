@@ -28,7 +28,7 @@ class LLMAnalysisPipeline:
     def __init__(
         self,
         openai_api_key: Optional[str] = None,
-        output_dir: str = "data/enhanced",
+        output_dir: Optional[str] = None,
         pipeline_version: str = "1.0.0",
     ):
         """
@@ -42,7 +42,13 @@ class LLMAnalysisPipeline:
         # Load environment variables
         load_dotenv()
 
-        self.output_dir = Path(output_dir)
+        self.project_root = Path(__file__).resolve().parent.parent.parent
+        
+        if output_dir:
+            self.output_dir = Path(output_dir)
+        else:
+            self.output_dir = self.project_root / "data" / "enhanced"
+            
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize pipeline components
