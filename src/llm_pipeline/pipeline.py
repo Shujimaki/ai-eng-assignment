@@ -144,39 +144,40 @@ class LLMAnalysisPipeline:
                 f"Found {len(reviews)} reviews, {len([r for r in reviews if r.has_modification])} with modifications"
             )
 
-            if not any(r.has_modification for r in reviews):
-                logger.warning("No reviews with modifications found")
-                return None
-
-            # Step 1: Extract modifications from all reviews
-            logger.info("Step 1: Extracting modifications from all reviews...")
-            modifications_and_reviews = []
-            
             modification_reviews = [r for r in reviews if r.has_modification]
-            for review in modification_reviews:
-                modification = self.tweak_extractor.extract_modification(review, recipe)
-                if modification:
-                    modifications_and_reviews.append((modification, review))
+            modifications_and_reviews = []
+            batch_change_records = []
 
-            if not modifications_and_reviews:
-                logger.warning("No modifications could be extracted")
-                return None
+            if not modification_reviews:
+                logger.info("No reviews with modifications found. Proceeding without enhancement.")
+                modified_recipe = recipe
+            else:
+                # Step 1: Extract modifications from all reviews
+                logger.info("Step 1: Extracting modifications from all reviews...")
+                for review in modification_reviews:
+                    modification = self.tweak_extractor.extract_modification(review, recipe)
+                    if modification:
+                        modifications_and_reviews.append((modification, review))
 
-            logger.info(
-                f"Successfully extracted {len(modifications_and_reviews)} modifications"
-            )
+                if not modifications_and_reviews:
+                    logger.warning("No modifications could be extracted. Proceeding without enhancement.")
+                    modified_recipe = recipe
+                else:
+                    logger.info(
+                        f"Successfully extracted {len(modifications_and_reviews)} modifications"
+                    )
 
-            # Step 2: Apply modifications to recipe
-            logger.info("Step 2: Applying modifications to recipe...")
-            modifications = [m[0] for m in modifications_and_reviews]
-            modified_recipe, batch_change_records = self.recipe_modifier.apply_modifications_batch(
-                recipe, modifications
-            )
+                    # Step 2: Apply modifications to recipe
+                    logger.info("Step 2: Applying modifications to recipe...")
+                    modifications = [m[0] for m in modifications_and_reviews]
+                    modified_recipe, batch_change_records = self.recipe_modifier.apply_modifications_batch(
+                        recipe, modifications
+                    )
 
-            total_changes = sum(len(cr) for cr in batch_change_records)
-            logger.info(
-                f"Applied modifications: {total_changes} total changes made"
-            )
+                    total_changes = sum(len(cr) for cr in batch_change_records)
+                    logger.info(
+                        f"Applied modifications: {total_changes} total changes made"
+                    )
 
             # Step 3: Generate enhanced recipe with attribution
             logger.info("Step 3: Generating enhanced recipe with attribution...")
